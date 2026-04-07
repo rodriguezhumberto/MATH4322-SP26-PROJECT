@@ -1,0 +1,166 @@
+---
+title: "ECG-Rough-Draft"
+author:
+  - name: Megan Osakwe
+  - name: Shivansh Patel
+  - name: Christopher Rios
+  - name: Humberto Rodriguez
+subtitle: |
+  MATH4322
+  SP26
+format: 
+  pdf:
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+
+documentclass: report
+papersize: letter
+toc: true
+geometry:
+      - top=20mm
+      - left=20mm
+      - right=20mm
+      - bottom=20mm
+
+---
+\newpage
+## Introduction
+
+## Methods
+
+### Decision Tree (Shivansh Patel & Christopher Rios)
+
+**Base Model Formula** 
+$$
+\begin{split}
+ECG\_signal &= hbpermin + Pseg + PQseg + QRSseg + QRseg + QTseg + RSseg \\
+&+ STseg + Tseg + PTseg + ECGseg + RRmean + PPmean + PQdis \\
+&+ PonQdis + PRdis + PonRdis + PSdis + PonSdis + PTdis + PonTdis \\
+&+ PToffdis + QRdis + QSdis + QTdis + QToffdis + RSdis + RTdis \\
+&+ RToffdis + STdis + SToffdis + PonToffdis + PQslope + STslope \\
+&+ QRSarea + QRSperi + RRTot + NNTot + SDRR + IBIM + IBISD \\
+&+ SDSD + RMSSD + NN50 + pNN50 
+\end{split}
+$$ {#eq-treeBase}
+
+**Gini Index** 
+$$
+G = \sum_{k=1}^{K} \hat{p_{mk}}(1 - \hat{p_{mk}})
+$$ {#eq-gini}
+
+**Entropy** 
+$$
+D = -\sum_{k=1}^{K} \hat{p_{mk}}log\hat{p_{mk}}
+$$ {#eq-entropy}
+
+### Random Forest (Megan Osakwe & Humberto Rodriguez)
+
+## Results
+
+## Conclusion
+
+## Bibliography
+
+Alekhya Lanka. (2023). ECG of Cardiac Ailments Dataset [Data set]. Kaggle.  
+https://doi.org/10.34740/KAGGLE/DSV/5917467
+
+## Appendix
+
+### Description of Variables Table
+
+```{r}
+#| label: tbl-variables
+#| tbl-cap: "Description of ECG Variables"
+#| warning: false
+#| message: false
+#| echo: false
+library(knitr)
+library(kableExtra)
+
+raw_data <- read.csv("VariableDescriptions.csv")
+variables.df <- raw_data[, 1:2] 
+colnames(variables.df) <- c("Variable", "Description")
+
+n_rows <- nrow(variables.df)
+mid_point <- ceiling(n_rows / 2)
+
+left_half <- variables.df[1:mid_point, ]
+right_half <- variables.df[(mid_point + 1):n_rows, ]
+
+if (nrow(left_half) > nrow(right_half)) {
+    right_half <- rbind(right_half, data.frame(Variable = "", Description = ""))
+}
+
+split_table <- cbind(left_half, right_half)
+
+kable(split_table, "latex", booktabs = FALSE, escape = TRUE, col.names = c("Variable", "Description", "Variable", "Description"), align = "p{2.0cm}p{6cm}|p{2.0cm}p{6cm}") %>%
+    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) %>%
+    column_spec(2, border_right = TRUE)
+```
+\newpage
+
+### Data Cleaning Source Code
+
+```{r}
+#| eval: false
+#| results: false
+# Import dataset, assuming file is in current working directory
+ecg.df <- read.csv("ECGCvdata.csv")
+
+# Response Variable counts
+ailement_counts <- table(ecg.df$ECG_signal)
+print(ailement_counts)
+
+# Finding variables with empty values
+cols_with_na <- names(ecg.df)[colSums(is.na(ecg.df)) > 0]
+print(cols_with_na)
+
+# Dropping columns
+to_drop <- c("RECORD", "QRtoQSdur", "RStoQSdur", "PonPQang", "PQRang", "QRSang", "RSTang", "STToffang", "QRslope", "RSslope")
+ecg.df <- ecg.df[, !(names(ecg.df) %in% to_drop)]
+
+# Converting response to factor
+ecg.df$ECG_signal <- as.factor(ecg.df$ECG_signal)
+```
+
+### Decision Tree Source Code
+
+```{r}
+#| eval: false
+#| results: false
+# Insert Source Code Here
+1 + 2
+```
+
+### Random Forest Source Code
+
+```{r}
+#| eval: false
+#| results: false
+# Load neccesary packages
+library(randomForest)
+library(caret)
+
+# Creates a vector to store the mean test error rates
+mean_test_error.rf <- c();
+for(i in c(1:10))
+{
+
+set.seed(i)
+
+# Creating stratified data for training and test
+train_index.rf <- createDataPartition(ecg.df$ECG_signal, p = 0.8, list = FALSE)
+train_data.rf <- ecg.df[train_index.rf, ]
+test_data.rf <- ecg.df[-train_index.rf, ]
+
+#Fit the model
+ecg.rf <- randomForest(ECG_signal ~ ., data = train_data.rf, ntree = 500, importance = TRUE)
+
+#Predictions on test data and storing Mean Test Error
+predictions.rf <- predict(ecg.rf, newdata = test_data.rf)
+mean_test_error.rf[i] <- mean(predictions.rf != test_data.rf$ECG_signal)
+
+}
+```
