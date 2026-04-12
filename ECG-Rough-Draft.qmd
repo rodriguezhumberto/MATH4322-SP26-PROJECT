@@ -139,12 +139,15 @@ ecg.df$ECG_signal <- as.factor(ecg.df$ECG_signal)
 ```{r}
 #| eval: false
 #| results: false
-# Load neccesary packages
+# Load necessary packages
 library(randomForest)
 library(caret)
 
-# Creates a vector to store the mean test error rates
-mean_test_error.rf <- c();
+# Creating variables to store variable importance and MTE
+p <- ncol(ecg.df) - 1
+importance.rf <- list()
+mte.rf <- c();
+
 for(i in c(1:10))
 {
 
@@ -155,12 +158,59 @@ train_index.rf <- createDataPartition(ecg.df$ECG_signal, p = 0.8, list = FALSE)
 train_data.rf <- ecg.df[train_index.rf, ]
 test_data.rf <- ecg.df[-train_index.rf, ]
 
-#Fit the model
-ecg.rf <- randomForest(ECG_signal ~ ., data = train_data.rf, ntree = 500, importance = TRUE)
+# Fit the model
+ecg.rf <- randomForest(ECG_signal ~ ., data = train_data.rf, mtry = sqrt(p), ntree = 500, importance = TRUE)
 
-#Predictions on test data and storing Mean Test Error
+# Predictions on test data and storing Mean Test Error
 predictions.rf <- predict(ecg.rf, newdata = test_data.rf)
-mean_test_error.rf[i] <- mean(predictions.rf != test_data.rf$ECG_signal)
+mte.rf[i] <- mean(predictions.rf != test_data.rf$ECG_signal)
 
+# Creating data frame for importance
+importance.df <- as.data.frame(importance(ecg.rf))
+
+# Creating a column for the variable to stop splitting of results per run
+importance.df$Feature <-  rownames(importance.df)
+
+# Storing variable importance
+importance.rf[[i]] <- importance.df
 }
+
+# Importance Calculations 
+
+# Aggregate the importance score
+all.importance.rf <- do.call(rbind, importance.rf)
+avg.importance.rf <- aggregate(. ~ Feature, data = all.importance.rf, FUN = mean)
+
+# Sorting the results for list of top variables
+avg.importance.rf <- avg.importance.rf[order(-avg.importance.rf$MeanDecreaseAccuracy), ]
+head(avg.importance.rf, 10)
+
+# Sorting the results to plot the average Mean Decrease Accuracy 
+avg.importance.rf <- avg.importance.rf[order(avg.importance.rf$MeanDecreaseAccuracy), ]
+top20.rf <- tail(avg.importance.rf, 20)
+dotchart(top20.rf$MeanDecreaseAccuracy, 
+         labels = top20.rf$Feature, 
+         cex = 0.7, 
+         main = "Average Variable Importance",
+         xlab = "Mean Decrease Accuracy")
+
+# Importance plot of last run
+varImpPlot(ecg.rf, n.var = 20, main = "Top 20 Most Influential Variables")
+
+# Accuracy Calculations
+
+
+# Averaging the accuracy across all runs
+avg.accuracy.rf <- 1 - mean(mte.rf)
+
+# Variance of accuracy
+sd.accuracy.rf <- sd(1 - mte.rf)
+
+# Confusion matrix for comparison
+confusion.rf <- confusionMatrix(predictions.rf, test_data.rf$ECG_signal)
+
+# Print results
+print(paste("Average Accuracy across 10-fold split:", round(avg.accuracy.rf, 4)))
+print(paste("Stability (Standard Deviation):", round(sd.accuracy.rf, 4)))
+print(confusion.rf)
 ```
