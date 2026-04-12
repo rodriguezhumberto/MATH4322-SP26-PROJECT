@@ -194,16 +194,12 @@ dotchart(top20.rf$MeanDecreaseAccuracy,
          main = "Average Variable Importance",
          xlab = "Mean Decrease Accuracy")
 
-# Importance plot of last run
-varImpPlot(ecg.rf, n.var = 20, main = "Top 20 Most Influential Variables")
-
 # Accuracy Calculations
-
 
 # Averaging the accuracy across all runs
 avg.accuracy.rf <- 1 - mean(mte.rf)
 
-# Variance of accuracy
+# Standard Deviation of acccuracy across all runs
 sd.accuracy.rf <- sd(1 - mte.rf)
 
 # Confusion matrix for comparison
@@ -211,6 +207,6 @@ confusion.rf <- confusionMatrix(predictions.rf, test_data.rf$ECG_signal)
 
 # Print results
 print(paste("Average Accuracy across 10-fold split:", round(avg.accuracy.rf, 4)))
-print(paste("Stability (Standard Deviation):", round(sd.accuracy.rf, 4)))
+print(paste("Standard Deviation of accuracy across 10-fold split:", round(sd.accuracy.rf, 4)))
 print(confusion.rf)
 ```
