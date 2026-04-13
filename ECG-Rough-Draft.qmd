@@ -28,6 +28,8 @@ geometry:
 \newpage
 ## Introduction
 
+The electrocardiogram (ECG) was invented by Dutch doctor and physiologist Williem Einthoven.The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a persons skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.
+
 ## Methods
 
 ### Decision Tree (Shivansh Patel & Christopher Rios)
@@ -65,6 +67,9 @@ $$ {#eq-entropy}
 
 Alekhya Lanka. (2023). ECG of Cardiac Ailments Dataset [Data set]. Kaggle.  
 https://doi.org/10.34740/KAGGLE/DSV/5917467
+
+Sattar Y, Chhabra L. Electrocardiogram. [Updated 2023 Jun 5]. In: StatPearls [Internet]. Treasure Island (FL): StatPearls Publishing; 2026 Jan-.  
+https://www.ncbi.nlm.nih.gov/books/NBK549803/
 
 ## Appendix
 
