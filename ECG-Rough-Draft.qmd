@@ -28,7 +28,7 @@ geometry:
 \newpage
 ## Introduction
 
-The electrocardiogram (ECG) was invented by Dutch doctor and physiologist Williem Einthoven.The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a persons skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.
+The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologist Williem Einthoven.The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a persons skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.The ECG is crucial in the initial evaluation of a 
 
 ## Methods
 
@@ -58,6 +58,102 @@ D = -\sum_{k=1}^{K} \hat{p_{mk}}log\hat{p_{mk}}
 $$ {#eq-entropy}
 
 ### Random Forest (Megan Osakwe & Humberto Rodriguez)
+
+[Rough Description of the methodology and what the code is supposed to accomplish - clean up]
+
+While the decision tree methodology is useful for visualization and can handle highly dimension data, it suffers from high variance, since different subsets from the same dataset can lead to different results. The random forest methodology can similarly handle highly dimensional data, while also reducing variance by averaging the result of many decorrelated trees, leading to a model that is resistant to overfitting.  
+[Tie in results of decision model here to see what random forest can improve on]  
+The model formula for the random forest is the same as the decision tree, which is as follows:
+
+$$
+\begin{split}
+ECG\_signal &= hbpermin + Pseg + PQseg + QRSseg + QRseg + QTseg + RSseg \\
+&+ STseg + Tseg + PTseg + ECGseg + RRmean + PPmean + PQdis \\
+&+ PonQdis + PRdis + PonRdis + PSdis + PonSdis + PTdis + PonTdis \\
+&+ PToffdis + QRdis + QSdis + QTdis + QToffdis + RSdis + RTdis \\
+&+ RToffdis + STdis + SToffdis + PonToffdis + PQslope + STslope \\
+&+ QRSarea + QRSperi + RRTot + NNTot + SDRR + IBIM + IBISD \\
+&+ SDSD + RMSSD + NN50 + pNN50 
+\end{split}
+$$ {#eq-treeBase}
+
+```{r}
+#| ref.label: "data-cleaning"
+#| echo: false
+#| results: hide
+```
+
+```{r}
+#| label: rf-fit
+#| echo: false
+#| message: false
+#| warning: false
+
+# Load necessary packages
+library(randomForest)
+library(caret)
+
+# Creating variables to store variable importance and MTE
+p <- ncol(ecg.df) - 1
+importance.rf <- list()
+mte.rf <- c();
+
+for(i in c(1:10))
+{
+
+set.seed(i)
+
+# Creating stratified data for training and test
+train_index.rf <- createDataPartition(ecg.df$ECG_signal, p = 0.8, list = FALSE)
+train_data.rf <- ecg.df[train_index.rf, ]
+test_data.rf <- ecg.df[-train_index.rf, ]
+
+# Fit the model
+ecg.rf <- randomForest(ECG_signal ~ ., data = train_data.rf, mtry = sqrt(p), ntree = 500, importance = TRUE)
+
+# Predictions on test data and storing Mean Test Error
+predictions.rf <- predict(ecg.rf, newdata = test_data.rf)
+mte.rf[i] <- mean(predictions.rf != test_data.rf$ECG_signal)
+
+# Creating data frame for importance
+importance.df <- as.data.frame(importance(ecg.rf))
+
+# Creating a column for the variable to stop splitting of results per run
+importance.df$Feature <- rownames(importance.df)
+
+# Storing variable importance
+importance.rf[[i]] <- importance.df
+}
+```
+
+```{r}
+#| label: rf-importance-calc
+#| echo: false
+#| message: false
+#| warning: false
+
+# Aggregate the importance score
+all.importance.rf <- do.call(rbind, importance.rf)
+avg.importance.rf <- aggregate(. ~ Feature, data = all.importance.rf, FUN = mean)
+```
+
+```{r}
+#| label: rf-importance-MDE-plot
+#| echo: false
+#| message: false
+#| warning: false
+# Sorting the results to plot the average Mean Decrease Accuracy 
+avg.importance.rf <- avg.importance.rf[order(avg.importance.rf$MeanDecreaseAccuracy), ]
+top20.rf <- tail(avg.importance.rf, 20)
+dotchart(top20.rf$MeanDecreaseAccuracy, 
+         labels = top20.rf$Feature, 
+         cex = 0.7, 
+         main = "Average Variable Importance",
+         xlab = "Mean Decrease Accuracy")
+
+```
+
+Model ran 10 times in a loop. Variables created to store importance and MTE of each run. Importance is a list because importance() produces a matrix, and vector c() couldnt accomodate. After model is fitted, calculations for both importance and mte is done using the variables created. if summary of ecg.rf was done, would only see the result of the last run, since each iteration overides the variable ecg.rf. varImpPlot() is not used for similar reasons, as it only provides a plot of the importance values of the last run. dotchart() can be used to achieve a plot with a similar layout as varImpPlot(). 
 
 ## Results
 
@@ -109,8 +205,11 @@ kable(split_table, "latex", booktabs = FALSE, escape = TRUE, col.names = c("Vari
 ### Data Cleaning Source Code
 
 ```{r}
+#| label: data-cleaning
 #| eval: false
 #| results: false
+#| message: false
+#| warning: false
 # Import dataset, assuming file is in current working directory
 ecg.df <- read.csv("ECGCvdata.csv")
 
@@ -204,7 +303,7 @@ dotchart(top20.rf$MeanDecreaseAccuracy,
 # Averaging the accuracy across all runs
 avg.accuracy.rf <- 1 - mean(mte.rf)
 
-# Standard Deviation of acccuracy across all runs
+# Standard Deviation of accuracy across all runs
 sd.accuracy.rf <- sd(1 - mte.rf)
 
 # Confusion matrix for comparison
