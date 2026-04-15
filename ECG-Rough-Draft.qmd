@@ -78,80 +78,22 @@ ECG\_signal &= hbpermin + Pseg + PQseg + QRSseg + QRseg + QTseg + RSseg \
 $$ {#eq-treeBase}
 
 ```{r}
-#| ref.label: "data-cleaning"
+#| label: setup-rf
+#| ref.label: !expr c("data-cleaning", "rf-packages", "rf-fit", "rf-importance-calc")
+#| eval: true
 #| echo: false
 #| results: hide
+#| message: false
+#| warning: false
 ```
 
 ```{r}
-#| label: rf-fit
+#| ref.label: rf-importance-MDE-plot
+#| eval: true
 #| echo: false
-#| message: false
-#| warning: false
-
-# Load necessary packages
-library(randomForest)
-library(caret)
-
-# Creating variables to store variable importance and MTE
-p <- ncol(ecg.df) - 1
-importance.rf <- list()
-mte.rf <- c();
-
-for(i in c(1:10))
-{
-
-set.seed(i)
-
-# Creating stratified data for training and test
-train_index.rf <- createDataPartition(ecg.df$ECG_signal, p = 0.8, list = FALSE)
-train_data.rf <- ecg.df[train_index.rf, ]
-test_data.rf <- ecg.df[-train_index.rf, ]
-
-# Fit the model
-ecg.rf <- randomForest(ECG_signal ~ ., data = train_data.rf, mtry = sqrt(p), ntree = 500, importance = TRUE)
-
-# Predictions on test data and storing Mean Test Error
-predictions.rf <- predict(ecg.rf, newdata = test_data.rf)
-mte.rf[i] <- mean(predictions.rf != test_data.rf$ECG_signal)
-
-# Creating data frame for importance
-importance.df <- as.data.frame(importance(ecg.rf))
-
-# Creating a column for the variable to stop splitting of results per run
-importance.df$Feature <- rownames(importance.df)
-
-# Storing variable importance
-importance.rf[[i]] <- importance.df
-}
+#| results: markup
 ```
 
-```{r}
-#| label: rf-importance-calc
-#| echo: false
-#| message: false
-#| warning: false
-
-# Aggregate the importance score
-all.importance.rf <- do.call(rbind, importance.rf)
-avg.importance.rf <- aggregate(. ~ Feature, data = all.importance.rf, FUN = mean)
-```
-
-```{r}
-#| label: rf-importance-MDE-plot
-#| echo: false
-#| message: false
-#| warning: false
-# Sorting the results to plot the average Mean Decrease Accuracy 
-avg.importance.rf <- avg.importance.rf[order(avg.importance.rf$MeanDecreaseAccuracy), ]
-top20.rf <- tail(avg.importance.rf, 20)
-dotchart(top20.rf$MeanDecreaseAccuracy, 
-         labels = top20.rf$Feature, 
-         cex = 0.7, 
-         main = "Average Variable Importance",
-         xlab = "Mean Decrease Accuracy")
-
-```
 
 Model ran 10 times in a loop. Variables created to store importance and MTE of each run. Importance is a list because importance() produces a matrix, and vector c() couldnt accomodate. After model is fitted, calculations for both importance and mte is done using the variables created. if summary of ecg.rf was done, would only see the result of the last run, since each iteration overides the variable ecg.rf. varImpPlot() is not used for similar reasons, as it only provides a plot of the importance values of the last run. dotchart() can be used to achieve a plot with a similar layout as varImpPlot(). 
 
@@ -241,12 +183,17 @@ ecg.df$ECG_signal <- as.factor(ecg.df$ECG_signal)
 ### Random Forest Source Code
 
 ```{r}
+#| label: rf-packages
 #| eval: false
 #| results: false
 # Load necessary packages
 library(randomForest)
 library(caret)
-
+```
+```{r}
+#| label: rf-fit
+#| eval: false
+#| results: false
 # Creating variables to store variable importance and MTE
 p <- ncol(ecg.df) - 1
 importance.rf <- list()
@@ -273,12 +220,16 @@ mte.rf[i] <- mean(predictions.rf != test_data.rf$ECG_signal)
 importance.df <- as.data.frame(importance(ecg.rf))
 
 # Creating a column for the variable to stop splitting of results per run
-importance.df$Feature <-  rownames(importance.df)
+importance.df$Feature <- rownames(importance.df)
 
 # Storing variable importance
 importance.rf[[i]] <- importance.df
 }
-
+```
+```{r}
+#| label: rf-importance-calc
+#| eval: false
+#| results: false
 # Importance Calculations 
 
 # Aggregate the importance score
@@ -288,16 +239,11 @@ avg.importance.rf <- aggregate(. ~ Feature, data = all.importance.rf, FUN = mean
 # Sorting the results for list of top variables
 avg.importance.rf <- avg.importance.rf[order(-avg.importance.rf$MeanDecreaseAccuracy), ]
 head(avg.importance.rf, 10)
-
-# Sorting the results to plot the average Mean Decrease Accuracy 
-avg.importance.rf <- avg.importance.rf[order(avg.importance.rf$MeanDecreaseAccuracy), ]
-top20.rf <- tail(avg.importance.rf, 20)
-dotchart(top20.rf$MeanDecreaseAccuracy, 
-         labels = top20.rf$Feature, 
-         cex = 0.7, 
-         main = "Average Variable Importance",
-         xlab = "Mean Decrease Accuracy")
-
+```
+```{r}
+#| label: rf-accuracy-calc
+#| eval: false
+#| results: false
 # Accuracy Calculations
 
 # Averaging the accuracy across all runs
@@ -308,9 +254,26 @@ sd.accuracy.rf <- sd(1 - mte.rf)
 
 # Confusion matrix for comparison
 confusion.rf <- confusionMatrix(predictions.rf, test_data.rf$ECG_signal)
-
+```
+```{r}
+#| label: rf-results
+#| eval: false
+#| results: false
 # Print results
 print(paste("Average Accuracy across 10-fold split:", round(avg.accuracy.rf, 4)))
 print(paste("Standard Deviation of accuracy across 10-fold split:", round(sd.accuracy.rf, 4)))
 print(confusion.rf)
+```
+```{r}
+#| label: rf-importance-MDE-plot
+#| eval: false
+#| results: false
+# Sorting the results to plot the average Mean Decrease Accuracy 
+avg.importance.rf <- avg.importance.rf[order(avg.importance.rf$MeanDecreaseAccuracy), ]
+top20.rf <- tail(avg.importance.rf, 20)
+dotchart(top20.rf$MeanDecreaseAccuracy, 
+         labels = top20.rf$Feature,
+         cex = 0.7, 
+         main = "Average Variable Importance",
+         xlab = "Mean Decrease Accuracy")
 ```
