@@ -28,7 +28,7 @@ geometry:
 \newpage
 ## Introduction
 
-The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologist Williem Einthoven.The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a persons skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.The ECG is crucial in the initial evaluation of a 
+The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologist Williem Einthoven.The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a persons skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.The ECG is crucial in the initial evaluation of a patient that is suspected of having a cardiac related issue. 
 
 ## Methods
 
@@ -199,10 +199,11 @@ library(caret)
 #| label: rf-fit
 #| eval: false
 #| results: false
-# Creating variables to store variable importance and MTE
+# Creating variables to store variable importance, MTE, and confusion matrix
 p <- ncol(ecg.df) - 1
 importance.rf <- list()
 mte.rf <- c();
+cm.rf <- list()
 
 for(i in c(1:10))
 {
@@ -229,6 +230,11 @@ importance.df$Feature <- rownames(importance.df)
 
 # Storing variable importance
 importance.rf[[i]] <- importance.df
+
+# Generating confusion matrix and storing the table
+current.cm <- confusionMatrix(predictions.rf, test_data.rf$ECG_signal)
+cm.rf[[i]] <- current.cm$table
+
 }
 ```
 ```{r}
@@ -256,9 +262,15 @@ avg.accuracy.rf <- 1 - mean(mte.rf)
 
 # Standard Deviation of accuracy across all runs
 sd.accuracy.rf <- sd(1 - mte.rf)
-
-# Confusion matrix for comparison
-confusion.rf <- confusionMatrix(predictions.rf, test_data.rf$ECG_signal)
+```
+```{r}
+#| label: rf-confusion-matrix
+#| eval: false
+#| results: false
+# Confusion Matrix aggregation
+total.cm.rf <- Reduce("+", cm.rf)
+final.cm.rf <- confusionMatrix(total.cm.rf)
+print(final.cm.rf)
 ```
 ```{r}
 #| label: rf-results
