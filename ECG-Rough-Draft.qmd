@@ -30,6 +30,8 @@ geometry:
 
 The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologist Williem Einthoven.The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a persons skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.The ECG is crucial in the initial evaluation of a patient that is suspected of having a cardiac related issue. 
 
+In order to better understand which electrocardiogram metrics have the most importance in correctly predicting a patient’s cardiac ailment, we have chosen to utilize a dataset that includes 1,200 observations, each representing a record of a cardiovascular ECG, with 56 variables per observation capturing various characteristics of each signal.
+
 ## Methods
 
 ### Decision Tree (Shivansh Patel & Christopher Rios)
