@@ -61,7 +61,7 @@ $$ {#eq-entropy}
 
 [Rough Description of the methodology and what the code is supposed to accomplish - clean up]
 
-While the decision tree methodology is useful for visualization and can handle highly dimension data, it suffers from high variance, since different subsets from the same dataset can lead to different results. The random forest methodology can similarly handle highly dimensional data, while also reducing variance by averaging the result of many decorrelated trees, leading to a model that is resistant to overfitting.  
+While the decision tree methodology is useful for visualization and can handle highly dimensional data, it suffers from high variance, since different subsets from the same dataset can lead to different results. The random forest methodology can similarly handle highly dimensional data, while also reducing variance by averaging the result of many decorrelated trees, leading to a model that is resistant to overfitting.  
 [Tie in results of decision model here to see what random forest can improve on]  
 The model formula for the random forest is the same as the decision tree, which is as follows:
 
@@ -76,6 +76,16 @@ ECG\_signal &= hbpermin + Pseg + PQseg + QRSseg + QRseg + QTseg + RSseg \
 &+ SDSD + RMSSD + NN50 + pNN50 
 \end{split}
 $$ {#eq-treeBase}
+
+The random forest model was implemented with this formula, using a repeated random subsamppling validation approach. For 10 iterations, the dataset was split into an 80% training set and a 20% test set. Following each training phase, the model's predictive performace was evaluated on the held out test data, with the Mean Test Error ($MTE$) and the Mean Decreasing Accuracy ($MDA$) recorded. $MDA$ was selected as the primary importance metric over Mean Decreasing Gini ($MDG$) because $MDA$ reflects the change in the models accuracy that results from excluding a variable, which is directly aligned with the research question. Upon completion of all the iterations, the $MDA$ values were aggregated and sorted to determine which variable has the most impact on the prediction accuracy of the model. The $MTE$ values were averaged to assess the model's overall predictive accuracy. 
+
+[Model ran 10 times in a loop. Variables created to store importance and MTE of each run. Importance is a list because importance() produces a matrix, and vector c() couldnt accomodate. After model is fitted, calculations for both importance and mte is done using the variables created. if summary of ecg.rf was done, would only see the result of the last run, since each iteration overides the variable ecg.rf. varImpPlot() is not used for similar reasons, as it only provides a plot of the importance values of the last run. dotchart() can be used to achieve a plot with a similar layout as varImpPlot().] 
+
+## Results
+
+### Decision Tree
+
+### Random Forest
 
 ```{r}
 #| label: setup-rf
@@ -93,11 +103,6 @@ $$ {#eq-treeBase}
 #| echo: false
 #| results: markup
 ```
-
-
-Model ran 10 times in a loop. Variables created to store importance and MTE of each run. Importance is a list because importance() produces a matrix, and vector c() couldnt accomodate. After model is fitted, calculations for both importance and mte is done using the variables created. if summary of ecg.rf was done, would only see the result of the last run, since each iteration overides the variable ecg.rf. varImpPlot() is not used for similar reasons, as it only provides a plot of the importance values of the last run. dotchart() can be used to achieve a plot with a similar layout as varImpPlot(). 
-
-## Results
 
 ## Conclusion
 
@@ -161,10 +166,10 @@ print(ailement_counts)
 
 # Finding variables with empty values
 cols_with_na <- names(ecg.df)[colSums(is.na(ecg.df)) > 0]
-print(cols_with_na)
+#print(cols_with_na)
 
 # Dropping columns
-to_drop <- c("RECORD", "QRtoQSdur", "RStoQSdur", "PonPQang", "PQRang", "QRSang", "RSTang", "STToffang", "QRslope", "RSslope")
+to_drop <- c("RECORD", cols_with_na)
 ecg.df <- ecg.df[, !(names(ecg.df) %in% to_drop)]
 
 # Converting response to factor
