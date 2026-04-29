@@ -10,6 +10,7 @@ subtitle: |
   SP26
 format: 
   pdf:
+    fontsize: 12pt
     include-in-header:
       text: |
         \usepackage{fvextra}
@@ -18,6 +19,11 @@ format:
 documentclass: report
 papersize: letter
 toc: true
+crossref:
+  tbl-prefix: "Table"
+  tbl-title: "Table"
+  appendix-title: "Appendix"
+  chapters: true
 geometry:
       - top=20mm
       - left=20mm
@@ -30,7 +36,7 @@ geometry:
 
 The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologist Willem Einthoven. The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a person's skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.The ECG is crucial in the initial evaluation of a patient that is suspected of having a cardiac related issue. 
 
-To identify which ECG metrics most accurately predict cardiac ailments, this study utilizes a dataset of 1,200 observations. Each observation represents a cardiovascular ECG record consisting of 56 variables that capture various features of the signal. A detailed description of these features is provided in **Table 1** of the **Appendix**
+To identify which ECG metrics most accurately predict cardiac ailments, this study utilizes a dataset of 1,200 observations. Each observation represents a cardiovascular ECG record consisting of 56 variables that capture various features of the signal. A detailed description of these features is provided in **@tbl-variables** of the **Appendix**
 
 The dataset has a variable, `ECG_signal`, which provides the cardiac ailment associated with that particular observation. `ECG_signal` has 4 possible outcomes, and they are distributed evenly among the dataset, with 300 observations per ailment. This will be used as the response variable for the models created. 
 
@@ -40,7 +46,7 @@ Two methodologies have been identified in being useful in visualizing and solvin
 
 ### Data Pre-Processing
 
-
+Before training the models, the dataset is preprocessed to ensure compatibility and consistency. The data is first screened for missing entries. While some tree based models can natively handle missing values, R’s `tree` and `randomForest` packages require complete datasets. To avoid introducing bias through imputation, any columns containing missing values are excluded from the analysis. Finally, the remaining categorical variables are identified and converted into factors.
 
 ### Decision Tree (Shivansh Patel & Christopher Rios)
 
@@ -108,10 +114,26 @@ The random forest model was implemented with this formula, using a repeated rand
 ```
 
 ```{r}
-#| ref.label: rf-importance-MDE-plot
+#| label: tbl-rf-matrix
+#| ref.label: rf-confusion-matrix
+#| tbl-cap: "Random Forest Confusion Matrix on ECG Data"
+#| tbl-cap-location: bottom
+#| fig-align: "center"
 #| eval: true
 #| echo: false
 #| results: markup
+```
+
+```{r}
+#| label: fig-rf-importance
+#| ref.label: rf-importance-MDA-plot
+#| fig-cap: "Mean Decreasing Accuracy of ECG Features in a Random Forest"
+#| fig-cap-location: bottom
+#| fig-align: "center"
+#| eval: true
+#| echo: false
+#| results: markup
+#| fig-height: 5
 ```
 
 ## Conclusion
@@ -124,7 +146,13 @@ https://doi.org/10.34740/KAGGLE/DSV/5917467
 Sattar Y, Chhabra L. Electrocardiogram. [Updated 2023 Jun 5]. In: StatPearls [Internet]. Treasure Island (FL): StatPearls Publishing; 2026 Jan-.  
 https://www.ncbi.nlm.nih.gov/books/NBK549803/
 
+::: {.appendix}
+
 ## Appendix
+
+\appendix
+\setcounter{table}{0} 
+\renewcommand{\thetable}{A\arabic{table}}
 
 ### Description of Variables Table
 
@@ -280,7 +308,7 @@ sd.accuracy.rf <- sd(1 - mte.rf)
 # Confusion Matrix aggregation
 total.cm.rf <- Reduce("+", cm.rf)
 final.cm.rf <- confusionMatrix(total.cm.rf)
-print(final.cm.rf)
+knitr::kable(total.cm.rf)
 ```
 ```{r}
 #| label: rf-results
@@ -292,7 +320,7 @@ print(paste("Standard Deviation of accuracy across 10-fold split:", round(sd.acc
 print(confusion.rf)
 ```
 ```{r}
-#| label: rf-importance-MDE-plot
+#| label: rf-importance-MDA-plot
 #| eval: false
 #| results: false
 # Sorting the results to plot the average Mean Decrease Accuracy 
@@ -304,3 +332,4 @@ dotchart(top20.rf$MeanDecreaseAccuracy,
          main = "Average Variable Importance",
          xlab = "Mean Decrease Accuracy")
 ```
+:::
