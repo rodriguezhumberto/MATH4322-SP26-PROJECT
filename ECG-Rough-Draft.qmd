@@ -28,11 +28,19 @@ geometry:
 \newpage
 ## Introduction
 
-The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologist Williem Einthoven.The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a persons skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.The ECG is crucial in the initial evaluation of a patient that is suspected of having a cardiac related issue. 
+The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologist Willem Einthoven. The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a person's skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.The ECG is crucial in the initial evaluation of a patient that is suspected of having a cardiac related issue. 
 
-In order to better understand which electrocardiogram metrics have the most importance in correctly predicting a patient’s cardiac ailment, we have chosen to utilize a dataset that includes 1,200 observations, each representing a record of a cardiovascular ECG, with 56 variables per observation capturing various characteristics of each signal.
+To identify which ECG metrics most accurately predict cardiac ailments, this study utilizes a dataset of 1,200 observations. Each observation represents a cardiovascular ECG record consisting of 56 variables that capture various features of the signal. A detailed description of these features is provided in **Table 1** of the **Appendix**
+
+The dataset has a variable, `ECG_signal`, which provides the cardiac ailment associated with that particular observation. `ECG_signal` has 4 possible outcomes, and they are distributed evenly among the dataset, with 300 observations per ailment. This will be used as the response variable for the models created. 
+
+Two methodologies have been identified in being useful in visualizing and solving the problem. First, a decision tree model will be used to visualize the importance of the features on predictive performance. A random forest model will then be utilized to reduce the variance inherent of the decision tree model, which will, in turn, increase the predictive performance, and allow for a more robust analysis of variable importance. 
 
 ## Methods
+
+### Data Pre-Processing
+
+
 
 ### Decision Tree (Shivansh Patel & Christopher Rios)
 
