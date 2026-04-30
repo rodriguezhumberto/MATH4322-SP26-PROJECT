@@ -98,7 +98,41 @@ The random forest model was implemented with this formula, using a repeated rand
 
 ### Decision Tree
 
+```{r}
+#| label: setup-df
+#| ref.label: !expr c("data-cleaning", "dt-packages", "dt-fit", "dt-pruning", "dt-importance-calc")
+#| eval: true
+#| echo: false
+#| results: hide
+#| message: false
+#| warning: false
+```
+
 The pruned decision tree achieved an average accuracy of **95.92% (MTE = 0.0408)** across the 10 train/test iterations, with a standard deviation of **1.24%**, indicating stable and consistent performance. The aggregated confusion matrix across all 10 runs reveals that the model performs particularly well on the NSR (Normal Sinus Rhythm) and ARR (Arrhythmia) classes, achieving perfect and near-perfect sensitivity of 1.00 and 0.997, respectively. The AFF (Atrial Fibrillation) class showed the lowest sensitivity at 0.888, suggesting it is the most difficult class to correctly identify, with a portion of AFF cases being misclassified as CHF. The CHF (Congestive Heart Failure) class also showed moderate misclassification, primarily with AFF observations. Overall, the model's Kappa statistic of 0.9456 confirms strong agreement between predicted and actual classifications beyond what would be expected by chance.
+
+```{r}
+#| label: fig-dev-size
+#| ref.label: dt-dev-vs-size
+#| fig-cap: "Deviance vs Tree Size to determine optimal pruning"
+#| fig-cap-location: bottom
+#| fig-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
+```
+
+```{r}
+#| label: fig-dt-prunned
+#| ref.label: dt-pruned-plot
+#| fig-cap: "Decision Tree pruned to 4 Terminal Nodes"
+#| fig-cap-location: bottom
+#| fig-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
+```
 
 ### Random Forest
 
@@ -120,6 +154,7 @@ The mean accuracy for the random forest model was **99%** across the 10 train/te
 #| tbl-cap: "Random Forest Confusion Matrix on ECG Data"
 #| tbl-cap-location: bottom
 #| fig-align: "center"
+#| fig-pos: 'H'
 #| eval: true
 #| echo: false
 #| results: markup
@@ -132,6 +167,7 @@ The aggregate confusion matrix (@tbl-rf-matrix) reveals a high classification pe
 #| fig-cap: "Mean Decreasing Accuracy of ECG Features in a Random Forest"
 #| fig-cap-location: bottom
 #| fig-align: "center"
+#| fig-pos: 'H'
 #| eval: true
 #| echo: false
 #| results: markup
@@ -274,18 +310,24 @@ ecg.tree.prune <- tree(ECG_signal ~ ., data = train_data.prune)
 # Cross-validation to find optimal number of terminal nodes
 cv.ecg <- cv.tree(ecg.tree.prune, FUN = prune.misclass)
 
-# Plot deviance vs tree size to visualize optimal pruning point
-plot(cv.ecg$size, cv.ecg$dev, type = "b",
-     xlab = "Number of Terminal Nodes",
-     ylab = "CV Classification Error",
-     main = "Cross-Validation for Tree Pruning")
-
 # Select the size with minimum CV error
 best.size <- cv.ecg$size[which.min(cv.ecg$dev)]
 best.size
 
 # Override to preferred tree size based on CV plot inspection
 ecg.pruned <- prune.misclass(ecg.tree.prune, best = 4)
+```
+
+```{r}
+#| label: dt-dev-vs-size
+#| eval: false
+#| results: false
+
+# Plot deviance vs tree size to visualize optimal pruning point
+plot(cv.ecg$size, cv.ecg$dev, type = "b",
+     xlab = "Number of Terminal Nodes",
+     ylab = "CV Classification Error",
+     main = "Cross-Validation for Tree Pruning")
 ```
 
 ```{r}
