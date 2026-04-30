@@ -38,7 +38,7 @@ The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologis
 
 To identify which ECG metrics most accurately predict cardiac ailments, this study utilizes a dataset of 1,200 observations. Each observation represents a cardiovascular ECG record consisting of 56 variables that capture various features of the signal. A detailed description of these features is provided in **@tbl-variables** of the **Appendix**
 
-The dataset has a variable, `ECG_signal`, which provides the cardiac ailment associated with that particular observation. `ECG_signal` has 4 possible outcomes, and they are distributed evenly among the dataset, with 300 observations per ailment. This will be used as the response variable for the models created. 
+The dataset has a variable, `ECG_signal`, which provides the cardiac condition associated with that particular observation. `ECG_signal` has 4 possible outcomes, and they are distributed evenly among the dataset, with 300 observations per condition. This will be used as the response variable for the models created. 
 
 Two methodologies have been identified in being useful in visualizing and solving the problem. First, a decision tree model will be used to visualize the importance of the features on predictive performance. A random forest model will then be utilized to reduce the variance inherent of the decision tree model, which will, in turn, increase the predictive performance, and allow for a more robust analysis of variable importance. 
 
@@ -112,6 +112,8 @@ The pruned decision tree achieved an average accuracy of **95.92% (MTE = 0.0408)
 #| warning: false
 ```
 
+The mean accuracy for the random forest model was **99%** across the 10 train/test iterations, with a relative standard deviation of **0.81%**, indicating the model is highly stable and not dependent on a single split. 
+
 ```{r}
 #| label: tbl-rf-matrix
 #| ref.label: rf-confusion-matrix
@@ -123,6 +125,7 @@ The pruned decision tree achieved an average accuracy of **95.92% (MTE = 0.0408)
 #| results: markup
 ```
 
+The aggregate confusion matrix (@tbl-rf-matrix) reveals a high classification performance across all the cardiac categories. The model achieved a perfect classification rate for both Normal Sinus Rhythm (NSR) and Arrhythmia (ARR). The most notable variance occurred in the classification of Atrial Fibrillation (AFF), where 21 instances were incorrectly labeled as Congestive Heart Failure (CHF). However, there were no instances of a missed diagnosis, where a diseased case was identified as normal, or false alarms, where a normal case was identified as diseased. 
 ```{r}
 #| label: fig-rf-importance
 #| ref.label: rf-importance-MDA-plot
@@ -407,9 +410,9 @@ knitr::kable(total.cm.rf)
 #| eval: false
 #| results: false
 # Print results
-print(paste("Average Accuracy across 10-fold split:", round(avg.accuracy.rf, 4)))
-print(paste("Standard Deviation of accuracy across 10-fold split:", round(sd.accuracy.rf, 4)))
-print(confusion.rf)
+print(paste("Average Accuracy across 10 iterations:", round(avg.accuracy.rf, 4)))
+print(paste("Standard Deviation of accuracy across 10 iterations:", round(sd.accuracy.rf, 4)))
+print(final.cm.rf)
 ```
 ```{r}
 #| label: rf-importance-MDA-plot
