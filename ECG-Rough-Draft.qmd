@@ -10,9 +10,11 @@ subtitle: |
   SP26
 format: 
   pdf:
-    fontsize: 12pt
+    fontsize: 11pt
     include-in-header:
       text: |
+        \usepackage{placeins}
+        \usepackage{float}
         \usepackage{fvextra}
         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
 
@@ -108,7 +110,21 @@ The random forest model was implemented with this formula, using a repeated rand
 #| warning: false
 ```
 
-The pruned decision tree achieved an average accuracy of **95.92% (MTE = 0.0408)** across the 10 train/test iterations, with a standard deviation of **1.24%**, indicating stable and consistent performance. The aggregated confusion matrix across all 10 runs reveals that the model performs particularly well on the NSR (Normal Sinus Rhythm) and ARR (Arrhythmia) classes, achieving perfect and near-perfect sensitivity of 1.00 and 0.997, respectively. The AFF (Atrial Fibrillation) class showed the lowest sensitivity at 0.888, suggesting it is the most difficult class to correctly identify, with a portion of AFF cases being misclassified as CHF. The CHF (Congestive Heart Failure) class also showed moderate misclassification, primarily with AFF observations. Overall, the model's Kappa statistic of 0.9456 confirms strong agreement between predicted and actual classifications beyond what would be expected by chance.
+The pruned decision tree achieved an average accuracy of **95.92% (MTE = 0.0408)** across the 10 train/test iterations, with a standard deviation of **1.24%**, indicating stable and consistent performance. 
+
+```{r}
+#| label: tbl-dt-matrix
+#| ref.label: dt-confusion-matrix
+#| tbl-cap: "Decision Tree Confusion Matrix on ECG Data"
+#| tbl-cap-location: bottom
+#| fig-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
+```
+
+The aggregated confusion matrix (**@tbl-dt-matrix**) across all 10 runs reveals that the model performs particularly well on the NSR (Normal Sinus Rhythm) and ARR (Arrhythmia) classes, achieving perfect and near-perfect sensitivity of 1.00 and 0.997, respectively. The AFF (Atrial Fibrillation) class showed the lowest sensitivity at 0.888, suggesting it is the most difficult class to correctly identify, with a portion of AFF cases being misclassified as CHF. The CHF (Congestive Heart Failure) class also showed moderate misclassification, primarily with AFF observations. Overall, the model's Kappa statistic of 0.9456 confirms strong agreement between predicted and actual classifications beyond what would be expected by chance.
 
 ```{r}
 #| label: fig-dev-size
@@ -153,14 +169,14 @@ The mean accuracy for the random forest model was **99%** across the 10 train/te
 #| ref.label: rf-confusion-matrix
 #| tbl-cap: "Random Forest Confusion Matrix on ECG Data"
 #| tbl-cap-location: bottom
-#| fig-align: "center"
+#| tbl-align: "center"
 #| fig-pos: 'H'
 #| eval: true
 #| echo: false
 #| results: markup
 ```
 
-The aggregate confusion matrix (@tbl-rf-matrix) reveals a high classification performance across all the cardiac categories. The model achieved a perfect classification rate for both Normal Sinus Rhythm (NSR) and Arrhythmia (ARR). The most notable variance occurred in the classification of Atrial Fibrillation (AFF), where 21 instances were incorrectly labeled as Congestive Heart Failure (CHF). However, there were no instances of a missed diagnosis, where a diseased case was identified as normal, or false alarms, where a normal case was identified as diseased. 
+The aggregate confusion matrix (**@tbl-rf-matrix**) reveals a high classification performance across all the cardiac categories. The model achieved a perfect classification rate for both Normal Sinus Rhythm (NSR) and Arrhythmia (ARR). The most notable variance occurred in the classification of Atrial Fibrillation (AFF), where 21 instances were incorrectly labeled as Congestive Heart Failure (CHF). However, there were no instances of a missed diagnosis, where a diseased case was identified as normal, or false alarms, where a normal case was identified as diseased. 
 ```{r}
 #| label: fig-rf-importance
 #| ref.label: rf-importance-MDA-plot
@@ -174,7 +190,7 @@ The aggregate confusion matrix (@tbl-rf-matrix) reveals a high classification pe
 #| fig-height: 5
 ```
 
-The sorted aggregate $MDA$ reveals the most important variables to the predictive accuracy of this random forest model. As shown in @fig-rf-importance, the most important feature is `NNTot`, followed by `IBISD`, and `Pseg`. `NNTot` is the total number of inter-beat intervals. `IBISD` is the standard deviation of inter-beat intervals. `Pseg` is the P wave segment length in milliseconds. The top two features are related to a patients inter-beat intervals, which is the time between successive heart beats.
+The sorted aggregate $MDA$ reveals the most important variables to the predictive accuracy of this random forest model. As shown in **@fig-rf-importance**, the most important feature is `NNTot`, followed by `IBISD`, and `Pseg`. `NNTot` is the total number of inter-beat intervals. `IBISD` is the standard deviation of inter-beat intervals. `Pseg` is the P wave segment length in milliseconds. The top two features are related to a patients inter-beat intervals, which is the time between successive heart beats.
 
 ## Conclusion
 
@@ -186,19 +202,25 @@ https://doi.org/10.34740/KAGGLE/DSV/5917467
 Sattar Y, Chhabra L. Electrocardiogram. [Updated 2023 Jun 5]. In: StatPearls [Internet]. Treasure Island (FL): StatPearls Publishing; 2026 Jan-.  
 https://www.ncbi.nlm.nih.gov/books/NBK549803/
 
-::: {.appendix}
-
-## Appendix
-
+\clearpage
 \appendix
 \setcounter{table}{0} 
 \renewcommand{\thetable}{A\arabic{table}}
 
+\FloatBarrier 
+::: {.appendix}
+
+## Appendix
+\appendix
+
 ### Description of Variables Table
 
+\FloatBarrier
 ```{r}
 #| label: tbl-variables
 #| tbl-cap: "Description of ECG Variables"
+#| tbl-cap-location: bottom
+#| tbl-pos: 'H'
 #| warning: false
 #| message: false
 #| echo: false
@@ -222,7 +244,7 @@ if (nrow(left_half) > nrow(right_half)) {
 split_table <- cbind(left_half, right_half)
 
 kable(split_table, "latex", booktabs = FALSE, escape = TRUE, col.names = c("Variable", "Description", "Variable", "Description"), align = "p{2.0cm}p{6cm}|p{2.0cm}p{6cm}") %>%
-    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) %>%
+    kable_styling(latex_options = c("striped", "HOLD_position"), full_width = FALSE, font_size = 10) %>%
     column_spec(2, border_right = TRUE)
 ```
 \newpage
@@ -253,6 +275,7 @@ ecg.df <- ecg.df[, !(names(ecg.df) %in% to_drop)]
 # Converting response to factor
 ecg.df$ECG_signal <- as.factor(ecg.df$ECG_signal)
 ```
+\newpage
 
 ### Decision Tree Source Code
 
@@ -359,8 +382,10 @@ print(paste("Standard Deviation of accuracy across 10-fold split:", round(sd.acc
 # Aggregate confusion matrices across all 10 runs
 total.cm.dt <- Reduce("+", cm.dt)
 final.cm.dt <- confusionMatrix(total.cm.dt)
-print(final.cm.dt)
+knitr::kable(total.cm.dt)
 ```
+
+\newpage
 
 ### Random Forest Source Code
 
