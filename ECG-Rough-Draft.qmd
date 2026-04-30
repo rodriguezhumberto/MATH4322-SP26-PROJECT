@@ -138,6 +138,8 @@ The aggregate confusion matrix (@tbl-rf-matrix) reveals a high classification pe
 #| fig-height: 5
 ```
 
+The sorted aggregate $MDA$ reveals the most important variables to the predictive accuracy of this random forest model. As shown in @fig-rf-importance, the most important feature is `NNTot`, followed by `IBISD`, and `Pseg`. `NNTot` is the total number of inter-beat intervals. `IBISD` is the standard deviation of inter-beat intervals. `Pseg` is the P wave segment length in milliseconds. The top two features are related to a patients inter-beat intervals, which is the time between successive heart beats.
+
 ## Conclusion
 
 ## Bibliography
