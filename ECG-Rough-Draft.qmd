@@ -1,5 +1,5 @@
 ---
-title: "ECG-Rough-Draft"
+title: "Variable Importance on an ECG Dataset"
 author:
   - name: Megan Osakwe
   - name: Shivansh Patel
@@ -34,13 +34,13 @@ geometry:
 
 ---
 \newpage
-## Introduction
+## Introduction (Humberto Rodriguez)
 
 The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologist Willem Einthoven. The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a person's skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.The ECG is crucial in the initial evaluation of a patient that is suspected of having a cardiac related issue. 
 
 To identify which ECG metrics most accurately predict cardiac ailments, this study utilizes a dataset of 1,200 observations. Each observation represents a cardiovascular ECG record consisting of 56 variables that capture various features of the signal. A detailed description of these features is provided in **@tbl-variables** of the **Appendix**
 
-The dataset has a variable, `ECG_signal`, which provides the cardiac condition associated with that particular observation. `ECG_signal` has 4 possible outcomes, and they are distributed evenly among the dataset, with 300 observations per condition. This will be used as the response variable for the models created. 
+The dataset has a variable, `ECG_signal`, which provides the cardiac condition associated with that particular observation. `ECG_signal` has 4 possible outcomes, 3 diseased conditions and 1 normal. The conditions are distributed evenly among the dataset, with 300 observations per condition. This will be used as the response variable for the models created. 
 
 Two methodologies have been identified in being useful in visualizing and solving the problem. First, a decision tree model will be used to visualize the importance of the features on predictive performance. A random forest model will then be utilized to reduce the variance inherent of the decision tree model, which will, in turn, increase the predictive performance, and allow for a more robust analysis of variable importance. 
 
@@ -108,6 +108,18 @@ The random forest model was implemented with this formula, using a repeated rand
 #| results: hide
 #| message: false
 #| warning: false
+```
+
+```{r}
+#| label: fig-dt
+#| ref.label: dt-plot
+#| fig-cap: "Decision Tree for ECG prediction"
+#| fig-cap-location: bottom
+#| fig-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
 ```
 
 The pruned decision tree achieved an average accuracy of **95.92% (MTE = 0.0408)** across the 10 train/test iterations, with a standard deviation of **1.24%**, indicating stable and consistent performance. 
@@ -192,7 +204,16 @@ The aggregate confusion matrix (**@tbl-rf-matrix**) reveals a high classificatio
 
 The sorted aggregate $MDA$ reveals the most important variables to the predictive accuracy of this random forest model. As shown in **@fig-rf-importance**, the most important feature is `NNTot`, followed by `IBISD`, and `Pseg`. `NNTot` is the total number of inter-beat intervals. `IBISD` is the standard deviation of inter-beat intervals. `Pseg` is the P wave segment length in milliseconds. The top two features are related to a patients inter-beat intervals, which is the time between successive heart beats.
 
-## Conclusion
+## Conclusion (Humberto Rodriguez)
+
+Tthe predictors that were most important in predicting the ECG cardiac condition for the decision tree model were `QTdis`, `NNTot`, `IBISD`, and `Pseg`. Once pruned, the predictors were reduced to only `QTdis` and `NNTot`. This partially aligns with the most important predictors of the random forest model, which were `NNTot`, `IBISD`, and `Pseg`. 
+
+The outlier is the inclusion of `QTdis` in the decision tree. However, this can be explained by the correlation between `QTdis` and inter-beat intervals, which are responsible for the `NNTot` and `IBISD` features. `QTdis` is the distance between the start of the Q signal and the end of the T signal, also known as the QT interval. The QT interval is the time for the heart's ventricles to depolarize and repolarize. This is a step in causing a heartbeat. Having a longer QT interval results in a lower inter-beat interval, and conversely, a shorter QT interval results in a higher inter-beat interval. This means that `QTdis`, `NNTot`, and `IBISD` are not independent. While the inter-beat interval is not explicitly a variable in the dataset, the accuracy of a prediction is highly dependent on features that derive or are derived from the inter-beat interval. The inter-beat interval is the heart rate variability, so intuitively, it makes sense that cardiac conditions like arrhythmia, atrial fibrillation, and congenital heart failure, which are characterized by abnormal heart rates, can be accurately distinguished from the normal sinus rhythm by features relating to the inter-beat interval. This distinction is why both models can have perfect precision and recall for the NSR, but not for diseased cardiac conditions. 
+
+Regardless of the difference in variable importance between the models, both had high accuracy, with the mean accuracy of the decision tree being **95.92%**, and the mean accuracy of the random forest being **99%**. With such high accuracy, future experiments on the dataset shouldn't focus on increasing accuracy, but rather discovering other relationships among the features. One approach could be reducing the dimensionality of the dataset before training, to see which features do not need to be collected for future datasets. 
+
+Overall, both the decision tree and random forest methodology are appropriate for interpreting an ECG dataset.
+
 
 ## Bibliography
 
@@ -316,6 +337,16 @@ for(i in 1:10)
   current.cm.dt <- confusionMatrix(predictions.dt, test_data.dt$ECG_signal)
   cm.dt[[i]] <- current.cm.dt$table
 }
+```
+
+```{r}
+#| label: dt-plot
+#| eval: false
+#| results: false
+# Plot the pruned tree — this is the tree picture required in Results
+plot(ecg.tree)
+text(ecg.tree, pretty = 0, cex = 0.5)
+title(main = "Decision Tree: ECG Signal Classification")
 ```
 
 ```{r}
