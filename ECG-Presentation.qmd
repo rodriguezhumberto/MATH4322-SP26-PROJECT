@@ -10,7 +10,7 @@ author:
   - name: Humberto Rodriguez
 format: 
   revealjs:
-    theme: dark
+    theme: default
 execute:
   echo: false
 editor: visual
@@ -21,6 +21,10 @@ editor: visual
 - 1200 observations
 - Response Variable: `ECG_signal`
 - Normal Sinus Rhytmn, Arrythmia, Atrial Fibrilation, Cogenital Heart Failure
+
+```{r fig1, echo=FALSE, out.width = '90%'}
+knitr::include_graphics("image.png.webp")
+```
 
 ## Decision Tree
 
@@ -120,14 +124,6 @@ editor: visual
 :::
 
 ::::
-
-## Code
-
-When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
 
 
 ```{r}

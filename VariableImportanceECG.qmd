@@ -1,0 +1,534 @@
+---
+title: "Variable Importance on an ECG Dataset"
+author:
+  - name: Megan Osakwe
+  - name: Shivansh Patel
+  - name: Christopher Rios
+  - name: Humberto Rodriguez
+subtitle: |
+  MATH4322
+  SP26
+format: 
+  pdf:
+    fontsize: 11pt
+    include-in-header:
+      text: |
+        \usepackage{placeins}
+        \usepackage{float}
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+
+documentclass: report
+papersize: letter
+toc: true
+crossref:
+  tbl-prefix: "Table"
+  tbl-title: "Table"
+  appendix-title: "Appendix"
+  chapters: true
+geometry:
+      - top=20mm
+      - left=20mm
+      - right=20mm
+      - bottom=20mm
+
+---
+\newpage
+## Introduction (Humberto Rodriguez)
+
+The electrocardiogram (ECG) was invented in 1902 by Dutch doctor and physiologist Willem Einthoven. The ECG records the heart's electrical signals using multiple electrodes placed on the surface of a person's skin. These electrodes are strategically positioned to monitor electrical activity in specific regions of the heart.The ECG is crucial in the initial evaluation of a patient that is suspected of having a cardiac related issue. 
+
+To identify which ECG metrics most accurately predict cardiac ailments, this study utilizes a dataset of 1,200 observations. Each observation represents a cardiovascular ECG record consisting of 56 variables that capture various features of the signal. A detailed description of these features is provided in **@tbl-variables** of the **Appendix**
+
+The dataset has a variable, `ECG_signal`, which provides the cardiac condition associated with that particular observation. `ECG_signal` has 4 possible outcomes, 3 diseased conditions and 1 normal. The conditions are distributed evenly among the dataset, with 300 observations per condition. This will be used as the response variable for the models created. 
+
+Two methodologies have been identified in being useful in visualizing and solving the problem. First, a decision tree model will be used to visualize the importance of the features on predictive performance. A random forest model will then be utilized to reduce the variance inherent of the decision tree model, which will, in turn, increase the predictive performance, and allow for a more robust analysis of variable importance. 
+
+## Methods
+
+### Data Pre-Processing
+
+Before training the models, the dataset is preprocessed to ensure compatibility and consistency. The data is first screened for missing entries. While some tree based models can natively handle missing values, R’s `tree` and `randomForest` packages require complete datasets. To avoid introducing bias through imputation, any columns containing missing values are excluded from the analysis. Finally, the remaining categorical variables are identified and converted into factors.
+
+### Decision Tree (Shivansh Patel & Christopher Rios)
+
+The decision tree was selected as the first model for this analysis due to its interpretability and its natural ability to handle multi-class classification problems without requiring distributional assumptions. A decision tree recursively partitions the feature space by selecting splits that minimize node impurity, measured here by the Gini index (@eq-gini) and entropy (@eq-entropy). One of the primary advantages of this model is that the resulting tree structure is highly visual and intuitive — the sequence of splits can be read directly as a set of decision rules, making it straightforward to communicate which variables are driving classification. However, the decision tree suffers from high variance: small changes in the training data can produce substantially different trees, and deep unpruned trees tend to overfit. In contrast to the random forest, which reduces this variance by averaging many decorrelated trees, the single decision tree trades predictive stability for transparency. The model was fit using the full set of ECG predictors specified in @eq-treeBase, with ECG_signal as the response variable. Following the initial fit on the training data, pruning was conducted to guard against overfitting. Cross-validation was performed using cv.tree() with FUN = prune.misclass, which selects the optimal number of terminal nodes by minimizing classification error rather than deviance. Inspection of the cross-validation plot indicated that a tree with 4 terminal nodes achieved a classification error close to the minimum, while offering a substantially simpler and more interpretable structure than the 7-node tree identified by which.min(). Following the principle that the simplest model with near-minimum error is preferable, the tree was pruned to 4 terminal nodes using prune.misclass(). For the purposes of computing the mean test error, the model was trained and evaluated across 10 iterations using an 80/20 stratified train/test split via createDataPartition(), with set.seed(i) ensuring the same data subdivisions as the random forest model.
+
+**Base Model Formula** 
+$$
+\begin{split}
+ECG\_signal &= hbpermin + Pseg + PQseg + QRSseg + QRseg + QTseg + RSseg \\
+&+ STseg + Tseg + PTseg + ECGseg + RRmean + PPmean + PQdis \\
+&+ PonQdis + PRdis + PonRdis + PSdis + PonSdis + PTdis + PonTdis \\
+&+ PToffdis + QRdis + QSdis + QTdis + QToffdis + RSdis + RTdis \\
+&+ RToffdis + STdis + SToffdis + PonToffdis + PQslope + STslope \\
+&+ QRSarea + QRSperi + RRTot + NNTot + SDRR + IBIM + IBISD \\
+&+ SDSD + RMSSD + NN50 + pNN50 
+\end{split}
+$$ {#eq-treeBase}
+
+**Gini Index** 
+$$
+G = \sum_{k=1}^{K} \hat{p_{mk}}(1 - \hat{p_{mk}})
+$$ {#eq-gini}
+
+**Entropy** 
+$$
+D = -\sum_{k=1}^{K} \hat{p_{mk}}log\hat{p_{mk}}
+$$ {#eq-entropy}
+
+### Random Forest (Megan Osakwe & Humberto Rodriguez)
+
+While the decision tree methodology is useful for visualization and can handle highly dimensional data, it suffers from high variance, since different subsets from the same dataset can lead to different results. The random forest methodology can similarly handle highly dimensional data, while also reducing variance by averaging the result of many decorrelated trees, leading to a model that is resistant to overfitting.  
+The model formula for the random forest is the same as the decision tree, which is as follows:
+
+$$
+\begin{split}
+ECG\_signal &= hbpermin + Pseg + PQseg + QRSseg + QRseg + QTseg + RSseg \\
+&+ STseg + Tseg + PTseg + ECGseg + RRmean + PPmean + PQdis \\
+&+ PonQdis + PRdis + PonRdis + PSdis + PonSdis + PTdis + PonTdis \\
+&+ PToffdis + QRdis + QSdis + QTdis + QToffdis + RSdis + RTdis \\
+&+ RToffdis + STdis + SToffdis + PonToffdis + PQslope + STslope \\
+&+ QRSarea + QRSperi + RRTot + NNTot + SDRR + IBIM + IBISD \\
+&+ SDSD + RMSSD + NN50 + pNN50 
+\end{split}
+$$ {#eq-treeBase}
+
+The random forest model was implemented with this formula, using a repeated random subsamppling validation approach. For 10 iterations, the dataset was split into an 80% training set and a 20% test set. Following each training phase, the model's predictive performace was evaluated on the held out test data, with the Mean Test Error ($MTE$) and the Mean Decreasing Accuracy ($MDA$) recorded. $MDA$ was selected as the primary importance metric over Mean Decreasing Gini ($MDG$) because $MDA$ reflects the change in the models accuracy that results from excluding a variable, which is directly aligned with the research question. Upon completion of all the iterations, the $MDA$ values were aggregated and sorted to determine which variable has the most impact on the prediction accuracy of the model. The $MTE$ values were averaged to assess the model's overall predictive accuracy. 
+
+## Results
+
+### Decision Tree
+
+```{r}
+#| label: setup-df
+#| ref.label: !expr c("data-cleaning", "dt-packages", "dt-fit", "dt-pruning", "dt-importance-calc")
+#| eval: true
+#| echo: false
+#| results: hide
+#| message: false
+#| warning: false
+```
+
+```{r}
+#| label: fig-dt
+#| ref.label: dt-plot
+#| fig-cap: "Decision Tree for ECG prediction"
+#| fig-cap-location: bottom
+#| fig-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
+```
+
+The pruned decision tree achieved an average accuracy of **95.92% (MTE = 0.0408)** across the 10 train/test iterations, with a standard deviation of **1.24%**, indicating stable and consistent performance. 
+
+```{r}
+#| label: tbl-dt-matrix
+#| ref.label: dt-confusion-matrix
+#| tbl-cap: "Decision Tree Confusion Matrix on ECG Data"
+#| tbl-cap-location: bottom
+#| fig-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
+```
+
+The aggregated confusion matrix (**@tbl-dt-matrix**) across all 10 runs reveals that the model performs particularly well on the NSR (Normal Sinus Rhythm) and ARR (Arrhythmia) classes, achieving perfect and near-perfect sensitivity of 1.00 and 0.997, respectively. The AFF (Atrial Fibrillation) class showed the lowest sensitivity at 0.888, suggesting it is the most difficult class to correctly identify, with a portion of AFF cases being misclassified as CHF. The CHF (Congestive Heart Failure) class also showed moderate misclassification, primarily with AFF observations. Overall, the model's Kappa statistic of 0.9456 confirms strong agreement between predicted and actual classifications beyond what would be expected by chance.
+
+```{r}
+#| label: fig-dev-size
+#| ref.label: dt-dev-vs-size
+#| fig-cap: "Deviance vs Tree Size to determine optimal pruning"
+#| fig-cap-location: bottom
+#| fig-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
+```
+
+```{r}
+#| label: fig-dt-prunned
+#| ref.label: dt-pruned-plot
+#| fig-cap: "Decision Tree pruned to 4 Terminal Nodes"
+#| fig-cap-location: bottom
+#| fig-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
+```
+
+The pruned decision tree indicates which ECG factors/variables are the most significant in predicting underlying cardiac conditions. As indicated in Figure 2, the primary splitting variables are `QTdis` (QT distance) and `NNTot` (total number of inter-beat intervals). They significantly contribute to avoiding misclassification and are the most important predictors in the model. 
+This is supported by the model’s strong overall performance, achieving an average accuracy of **95.92% (MTE = 0.0408)** across the 10 iterations.
+In particular, `QTdis` serves as the initial split, signifying that variations in the QT interval is a major indicator between different cardiac conditions. Subsequent splits on `NNTot` further improves the classification by highlighting the importance of heart rate variability and inter-beat interval structure in identifying abnormalities. The effectiveness of these variables is reflected in the confusion matrix, where the model correctly classifies 600 out of 600 NSR cases (100%) and 598 out of 605 ARR-related predictions, with only minimal misclassification (6 ARR cases misclassified as CHF and 1 as AFF). Similarly, CHF is correctly classified 571 times, with 66 misclassified as AFF, indicating some overlap between these two classes.
+
+### Random Forest
+
+```{r}
+#| label: setup-rf
+#| ref.label: !expr c("data-cleaning", "rf-packages", "rf-fit", "rf-importance-calc")
+#| eval: true
+#| echo: false
+#| results: hide
+#| message: false
+#| warning: false
+```
+
+The mean accuracy for the random forest model was **99% (MTE = 0.01)** across the 10 train/test iterations, with a relative standard deviation of **0.81%**, indicating the model is highly stable and not dependent on a single split. 
+
+```{r}
+#| label: tbl-rf-matrix
+#| ref.label: rf-confusion-matrix
+#| tbl-cap: "Random Forest Confusion Matrix on ECG Data"
+#| tbl-cap-location: bottom
+#| tbl-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
+```
+
+The aggregate confusion matrix (**@tbl-rf-matrix**) reveals a high classification performance across all the cardiac categories. The model achieved a perfect classification rate for both NSR and ARR. The most notable variance occurred in the classification of AFF, where 21 instances were incorrectly labeled as CHF. However, there were no instances of a missed diagnosis, where a diseased case was identified as normal, or false alarms, where a normal case was identified as diseased. 
+```{r}
+#| label: fig-rf-importance
+#| ref.label: rf-importance-MDA-plot
+#| fig-cap: "Mean Decreasing Accuracy of ECG Features in a Random Forest"
+#| fig-cap-location: bottom
+#| fig-align: "center"
+#| fig-pos: 'H'
+#| eval: true
+#| echo: false
+#| results: markup
+#| fig-height: 5
+```
+
+The sorted aggregate $MDA$ reveals the most important variables to the predictive accuracy of this random forest model. As shown in **@fig-rf-importance**, the most important feature is `NNTot`, followed by `IBISD`, and `Pseg`. `NNTot` is the total number of inter-beat intervals. `IBISD` is the standard deviation of inter-beat intervals. `Pseg` is the P wave segment length in milliseconds. The top two features are related to a patients inter-beat intervals, which is the time between successive heart beats.
+
+## Conclusion (Humberto Rodriguez)
+
+Tthe predictors that were most important in predicting the ECG cardiac condition for the decision tree model were `QTdis`, `NNTot`, `IBISD`, and `Pseg`. Once pruned, the predictors were reduced to only `QTdis` and `NNTot`. This partially aligns with the most important predictors of the random forest model, which were `NNTot`, `IBISD`, and `Pseg`. 
+
+The outlier is the inclusion of `QTdis` in the decision tree. However, this can be explained by the correlation between `QTdis` and inter-beat intervals, which are responsible for the `NNTot` and `IBISD` features. `QTdis` is the distance between the start of the Q signal and the end of the T signal, also known as the QT interval. The QT interval is the time for the heart's ventricles to depolarize and repolarize. This is a step in causing a heartbeat. Having a longer QT interval results in a lower inter-beat interval, and conversely, a shorter QT interval results in a higher inter-beat interval. This means that `QTdis`, `NNTot`, and `IBISD` are not independent. While the inter-beat interval is not explicitly a variable in the dataset, the accuracy of a prediction is highly dependent on features that derive or are derived from the inter-beat interval. The inter-beat interval is the heart rate variability, so intuitively, it makes sense that cardiac conditions like arrhythmia, atrial fibrillation, and congenital heart failure, which are characterized by abnormal heart rates, can be accurately distinguished from the normal sinus rhythm by features relating to the inter-beat interval. This distinction is why both models can have perfect precision and recall for the NSR, but not for diseased cardiac conditions. 
+
+Regardless of the difference in variable importance between the models, both had high accuracy, with the mean accuracy of the decision tree being **95.92%**, and the mean accuracy of the random forest being **99%**. With such high accuracy, future experiments on the dataset shouldn't focus on increasing accuracy, but rather discovering other relationships among the features. One approach could be reducing the dimensionality of the dataset before training, to see which features do not need to be collected for future datasets. 
+
+Overall, both the decision tree and random forest methodology are appropriate for interpreting an ECG dataset.
+
+
+## Bibliography
+
+Alekhya Lanka. (2023). ECG of Cardiac Ailments Dataset [Data set]. Kaggle.  
+https://doi.org/10.34740/KAGGLE/DSV/5917467
+
+Sattar Y, Chhabra L. Electrocardiogram. [Updated 2023 Jun 5]. In: StatPearls [Internet]. Treasure Island (FL): StatPearls Publishing; 2026 Jan-.  
+https://www.ncbi.nlm.nih.gov/books/NBK549803/
+
+\clearpage
+\appendix
+\setcounter{table}{0} 
+\renewcommand{\thetable}{A\arabic{table}}
+
+\FloatBarrier 
+::: {.appendix}
+
+## Appendix
+\appendix
+
+### Description of Variables Table
+
+\FloatBarrier
+```{r}
+#| label: tbl-variables
+#| tbl-cap: "Description of ECG Variables"
+#| tbl-cap-location: bottom
+#| tbl-pos: 'H'
+#| warning: false
+#| message: false
+#| echo: false
+library(knitr)
+library(kableExtra)
+
+raw_data <- read.csv("VariableDescriptions.csv")
+variables.df <- raw_data[, 1:2] 
+colnames(variables.df) <- c("Variable", "Description")
+
+n_rows <- nrow(variables.df)
+mid_point <- ceiling(n_rows / 2)
+
+left_half <- variables.df[1:mid_point, ]
+right_half <- variables.df[(mid_point + 1):n_rows, ]
+
+if (nrow(left_half) > nrow(right_half)) {
+    right_half <- rbind(right_half, data.frame(Variable = "", Description = ""))
+}
+
+split_table <- cbind(left_half, right_half)
+
+kable(split_table, "latex", booktabs = FALSE, escape = TRUE, col.names = c("Variable", "Description", "Variable", "Description"), align = "p{2.0cm}p{6cm}|p{2.0cm}p{6cm}") %>%
+    kable_styling(latex_options = c("striped", "HOLD_position"), full_width = FALSE, font_size = 10) %>%
+    column_spec(2, border_right = TRUE)
+```
+\newpage
+
+### Data Cleaning Source Code
+
+```{r}
+#| label: data-cleaning
+#| eval: false
+#| results: false
+#| message: false
+#| warning: false
+# Import dataset, assuming file is in current working directory
+ecg.df <- read.csv("ECGCvdata.csv")
+
+# Response Variable counts
+ailement_counts <- table(ecg.df$ECG_signal)
+print(ailement_counts)
+
+# Finding variables with empty values
+cols_with_na <- names(ecg.df)[colSums(is.na(ecg.df)) > 0]
+#print(cols_with_na)
+
+# Dropping columns
+to_drop <- c("RECORD", cols_with_na)
+ecg.df <- ecg.df[, !(names(ecg.df) %in% to_drop)]
+
+# Converting response to factor
+ecg.df$ECG_signal <- as.factor(ecg.df$ECG_signal)
+```
+\newpage
+
+### Decision Tree Source Code
+
+```{r}
+#| label: dt-packages
+#| eval: false
+#| results: false
+# Load necessary packages
+library(tree)
+library(caret)
+```
+
+```{r}
+#| label: dt-fit
+#| eval: false
+#| results: false
+# Creating variables to store MTE and confusion matrices
+mte.dt <- c()
+cm.dt <- list()
+
+for(i in 1:10)
+{
+  set.seed(i)
+  
+  # Stratified 80/20 split — mirrors random forest splits exactly
+  train_index.dt <- createDataPartition(ecg.df$ECG_signal, p = 0.8, list = FALSE)
+  train_data.dt <- ecg.df[train_index.dt, ]
+  test_data.dt  <- ecg.df[-train_index.dt, ]
+  
+  # Fit the full unpruned tree on training data
+  ecg.tree <- tree(ECG_signal ~ ., data = train_data.dt)
+  
+  # Predictions and Mean Test Error on held-out test data
+  predictions.dt <- predict(ecg.tree, newdata = test_data.dt, type = "class")
+  mte.dt[i] <- mean(predictions.dt != test_data.dt$ECG_signal)
+  
+  # Store confusion matrix
+  current.cm.dt <- confusionMatrix(predictions.dt, test_data.dt$ECG_signal)
+  cm.dt[[i]] <- current.cm.dt$table
+}
+```
+
+```{r}
+#| label: dt-plot
+#| eval: false
+#| results: false
+# Plot the pruned tree — this is the tree picture required in Results
+plot(ecg.tree)
+text(ecg.tree, pretty = 0, cex = 0.5)
+title(main = "Decision Tree: ECG Signal Classification")
+```
+
+```{r}
+#| label: dt-pruning
+#| eval: false
+#| results: false
+# Pruning — done once on a fixed split for visualization and interpretation
+set.seed(1)
+train_index.prune <- createDataPartition(ecg.df$ECG_signal, p = 0.8, list = FALSE)
+train_data.prune  <- ecg.df[train_index.prune, ]
+
+# Fit full tree on training data
+ecg.tree.prune <- tree(ECG_signal ~ ., data = train_data.prune)
+
+# Cross-validation to find optimal number of terminal nodes
+cv.ecg <- cv.tree(ecg.tree.prune, FUN = prune.misclass)
+
+# Select the size with minimum CV error
+best.size <- cv.ecg$size[which.min(cv.ecg$dev)]
+best.size
+
+# Override to preferred tree size based on CV plot inspection
+ecg.pruned <- prune.misclass(ecg.tree.prune, best = 4)
+```
+
+```{r}
+#| label: dt-dev-vs-size
+#| eval: false
+#| results: false
+
+# Plot deviance vs tree size to visualize optimal pruning point
+plot(cv.ecg$size, cv.ecg$dev, type = "b",
+     xlab = "Number of Terminal Nodes",
+     ylab = "CV Classification Error",
+     main = "Cross-Validation for Tree Pruning")
+```
+
+```{r}
+#| label: dt-pruned-plot
+#| eval: false
+#| results: false
+# Plot the pruned tree — this is the tree picture required in Results
+plot(ecg.pruned)
+text(ecg.pruned, pretty = 0, cex = 0.7)
+title(main = "Pruned Decision Tree: ECG Signal Classification")
+```
+
+```{r}
+#| label: dt-accuracy-calc
+#| eval: false
+#| results: false
+# Accuracy calculations across 10 iterations
+avg.accuracy.dt <- 1 - mean(mte.dt)
+sd.accuracy.dt  <- sd(1 - mte.dt)
+
+print(paste("Average Accuracy across 10-fold split:", round(avg.accuracy.dt, 4)))
+print(paste("Standard Deviation of accuracy across 10-fold split:", round(sd.accuracy.dt, 4)))
+```
+
+```{r}
+#| label: dt-confusion-matrix
+#| eval: false
+#| results: false
+# Aggregate confusion matrices across all 10 runs
+total.cm.dt <- Reduce("+", cm.dt)
+final.cm.dt <- confusionMatrix(total.cm.dt)
+knitr::kable(total.cm.dt)
+```
+
+\newpage
+
+### Random Forest Source Code
+
+```{r}
+#| label: rf-packages
+#| eval: false
+#| results: false
+# Load necessary packages
+library(randomForest)
+library(caret)
+```
+```{r}
+#| label: rf-fit
+#| eval: false
+#| results: false
+# Creating variables to store variable importance, MTE, and confusion matrix
+p <- ncol(ecg.df) - 1
+importance.rf <- list()
+mte.rf <- c();
+cm.rf <- list()
+
+for(i in c(1:10))
+{
+
+set.seed(i)
+
+# Creating stratified data for training and test
+train_index.rf <- createDataPartition(ecg.df$ECG_signal, p = 0.8, list = FALSE)
+train_data.rf <- ecg.df[train_index.rf, ]
+test_data.rf <- ecg.df[-train_index.rf, ]
+
+# Fit the model
+ecg.rf <- randomForest(ECG_signal ~ ., data = train_data.rf, mtry = sqrt(p), ntree = 500, importance = TRUE)
+
+# Predictions on test data and storing Mean Test Error
+predictions.rf <- predict(ecg.rf, newdata = test_data.rf)
+mte.rf[i] <- mean(predictions.rf != test_data.rf$ECG_signal)
+
+# Creating data frame for importance
+importance.df <- as.data.frame(importance(ecg.rf))
+
+# Creating a column for the variable to stop splitting of results per run
+importance.df$Feature <- rownames(importance.df)
+
+# Storing variable importance
+importance.rf[[i]] <- importance.df
+
+# Generating confusion matrix and storing the table
+current.cm <- confusionMatrix(predictions.rf, test_data.rf$ECG_signal)
+cm.rf[[i]] <- current.cm$table
+
+}
+```
+```{r}
+#| label: rf-importance-calc
+#| eval: false
+#| results: false
+# Importance Calculations 
+
+# Aggregate the importance score
+all.importance.rf <- do.call(rbind, importance.rf)
+avg.importance.rf <- aggregate(. ~ Feature, data = all.importance.rf, FUN = mean)
+
+# Sorting the results for list of top variables
+avg.importance.rf <- avg.importance.rf[order(-avg.importance.rf$MeanDecreaseAccuracy), ]
+head(avg.importance.rf, 10)
+```
+```{r}
+#| label: rf-accuracy-calc
+#| eval: false
+#| results: false
+# Accuracy Calculations
+
+# Averaging the accuracy across all runs
+avg.accuracy.rf <- 1 - mean(mte.rf)
+
+# Standard Deviation of accuracy across all runs
+sd.accuracy.rf <- sd(1 - mte.rf)
+```
+```{r}
+#| label: rf-confusion-matrix
+#| eval: false
+#| results: false
+# Confusion Matrix aggregation
+total.cm.rf <- Reduce("+", cm.rf)
+final.cm.rf <- confusionMatrix(total.cm.rf)
+knitr::kable(total.cm.rf)
+```
+```{r}
+#| label: rf-results
+#| eval: false
+#| results: false
+# Print results
+print(paste("Average Accuracy across 10 iterations:", round(avg.accuracy.rf, 4)))
+print(paste("Standard Deviation of accuracy across 10 iterations:", round(sd.accuracy.rf, 4)))
+print(final.cm.rf)
+```
+```{r}
+#| label: rf-importance-MDA-plot
+#| eval: false
+#| results: false
+# Sorting the results to plot the average Mean Decrease Accuracy 
+avg.importance.rf <- avg.importance.rf[order(avg.importance.rf$MeanDecreaseAccuracy), ]
+top20.rf <- tail(avg.importance.rf, 20)
+dotchart(top20.rf$MeanDecreaseAccuracy, 
+         labels = top20.rf$Feature,
+         cex = 0.7, 
+         main = "Average Variable Importance",
+         xlab = "Mean Decrease Accuracy")
+```
+:::
