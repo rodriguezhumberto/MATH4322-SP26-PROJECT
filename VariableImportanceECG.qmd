@@ -208,7 +208,7 @@ The aggregate confusion matrix (**@tbl-rf-matrix**) reveals a high classificatio
 
 The sorted aggregate $MDA$ reveals the most important variables to the predictive accuracy of this random forest model. As shown in **@fig-rf-importance**, the most important feature is `NNTot`, followed by `IBISD`, and `Pseg`. `NNTot` is the total number of inter-beat intervals. `IBISD` is the standard deviation of inter-beat intervals. `Pseg` is the P wave segment length in milliseconds. The top two features are related to a patients inter-beat intervals, which is the time between successive heart beats.
 
-## Conclusion (Humberto Rodriguez)
+## Conclusion (Humberto Rodriguez & Shivansh Patel)
 
 Tthe predictors that were most important in predicting the ECG cardiac condition for the decision tree model were `QTdis`, `NNTot`, `IBISD`, and `Pseg`. Once pruned, the predictors were reduced to only `QTdis` and `NNTot`. This partially aligns with the most important predictors of the random forest model, which were `NNTot`, `IBISD`, and `Pseg`. 
 
